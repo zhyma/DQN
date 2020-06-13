@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import cv2
 import time
 
+from tools import pre_process, init_state
 
 env = gym.make('Breakout-v0')
 state_size = env.observation_space.shape
@@ -16,18 +17,7 @@ print('Original state shape: ', state_size)
 print('Number of actions: ', env.action_space.n)
 
 agent = Agent((32, 4, 84, 84), action_size, seed=1)  # state size (batch_size, 4 frames, img_height, img_width)
-TRAIN = False  # train or test flag
-
-
-def pre_process(observation):
-    """Process (210, 160, 3) picture into (1, 84, 84)"""
-    x_t = cv2.cvtColor(cv2.resize(observation, (84, 84)), cv2.COLOR_BGR2GRAY)
-    ret, x_t = cv2.threshold(x_t, 1, 255, cv2.THRESH_BINARY)
-    return x_t
-
-
-def init_state(processed_obs):
-    return np.stack((processed_obs, processed_obs, processed_obs, processed_obs), axis=0)
+TRAIN = True  # train or test flag
 
 
 def dqn(n_episodes=30000, max_t=40000, eps_start=1.0, eps_end=0.01, eps_decay=0.9995):
@@ -106,7 +96,9 @@ if __name__ == '__main__':
                 action = agent.act(state)
                 env.render()
                 next_state, reward, done, _ = env.step(action)
-                state = np.stack((state[1], state[2], state[3], pre_process(next_state)), axis=0)
+                obs = pre_process(next_state)
+                state = np.stack((state[1], state[2], state[3], obs), axis=0)
+                cv2.imshow('Breakout', obs)
                 total_reward += reward
 
                 # time.sleep(0.01)

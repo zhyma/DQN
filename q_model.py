@@ -6,6 +6,8 @@ import cv2
 import gym
 import matplotlib.pyplot as plt
 
+from tools import pre_process,init_state
+
 class QNetwork(nn.Module):
     """Actor (Policy) Model."""
 
@@ -40,35 +42,22 @@ class QNetwork(nn.Module):
         conv_out = self.conv(state).view(state.size()[0], -1)
         return self.fc(conv_out)
 
-
-def pre_process(observation):
-    """Process (210, 160, 3) picture into (1, 84, 84)"""
-    x_t = cv2.cvtColor(cv2.resize(observation, (84, 84)), cv2.COLOR_BGR2GRAY)
-    ret, x_t = cv2.threshold(x_t, 1, 255, cv2.THRESH_BINARY)
-    return np.reshape(x_t, (1, 84, 84)), x_t
-
-
-def stack_state(processed_obs):
-    """Four frames as a state"""
-    return np.stack((processed_obs, processed_obs, processed_obs, processed_obs), axis=0)
-
-
 if __name__ == '__main__':
     env = gym.make('Breakout-v0')
     print('State shape: ', env.observation_space.shape)
     print('Number of actions: ', env.action_space.n)
 
     obs = env.reset()
-    x_t, img = pre_process(obs)
-    state = stack_state(img)
+    img = pre_process(obs)
+    state = init_state(img)
     print(np.shape(state[0]))
 
-    # plt.imshow(img, cmap='gray')
-    # 用cv2模块显示
-    # cv2.imshow('Breakout', img)
-    # cv2.waitKey(0)
+    # plt.imshow(img, cmap='gray') # not working
+    # display use cv2 module
+    cv2.imshow('Breakout', img)
+    cv2.waitKey(0)
 
-    state = torch.randn(32, 4, 84, 84)  # (batch_size, color_channel, img_height,img_width)
+    state = torch.randn(32, 4, 84, 84)  # (batch_size, 4 frames, img_height,img_width)
     state_size = state.size()
 
     cnn_model = QNetwork(state_size, action_size=4, seed=1)

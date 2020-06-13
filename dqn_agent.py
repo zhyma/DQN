@@ -8,7 +8,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-BUFFER_SIZE = int(1e6)  # replay buffer size
+BUFFER_SIZE = int(1e5)  # replay buffer size
 BATCH_SIZE = 32         # minibatch size
 GAMMA = 0.99            # discount factor
 TAU = 1e-3              # for soft update of target parameters
@@ -31,6 +31,8 @@ class Agent():
             action_size (int): dimension of each action
             seed (int): random seed
         """
+        print('Agent device: '),
+        print(device)
         self.state_size = state_size
         self.action_size = action_size
         self.seed = random.seed(seed)
@@ -93,7 +95,8 @@ class Agent():
         # Compute Q targets for current states
         Q_targets = rewards + (gamma * Q_targets_next * (1 - dones))
 
-        Q_expected = self.qnetwork_local(states).gather(1, actions)  # 固定行号，确认列号
+        # Get exprected Q values from local model
+        Q_expected = self.qnetwork_local(states).gather(1, actions)
 
         # Compute loss
         loss = F.mse_loss(Q_expected, Q_targets)
@@ -132,6 +135,8 @@ class ReplayBuffer:
             batch_size (int): size of each training batch
             seed (int): random seed
         """
+        print('ReplayBuffer device: '),
+        print(device)
         self.action_size = action_size
         self.memory = deque(maxlen=buffer_size)  
         self.batch_size = batch_size
